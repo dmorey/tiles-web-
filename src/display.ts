@@ -207,13 +207,15 @@ function add_board(board_id: number, name: string): HTMLElement {
 }
 
 export class GuiDisplay {
-    factories: Array<HTMLElement> = [];
-    boards: Array<HTMLElement> = [];
-    lines: Array<Array<HTMLElement>> = [];
+    private boards: Array<HTMLElement> = [];
+    private factories: Array<HTMLElement> = [];
+    private lines: Array<Array<HTMLElement>> = [];
+    private gamestate: GameState;
 
     constructor(gamestate: GameState, public players: Array<PlayerInterface>) {
+        this.gamestate = gamestate;
         // Create player boards
-        gamestate.playerBoards.forEach((_, i) => {
+        gamestate.playerBoards.forEach((_: any, i: number) => {
             this.boards.push(add_board(i, players[i].name));
             //  Store references to all the lines
             const lines = [...this.boards[i].getElementsByClassName("line")] as Array<HTMLElement>;
@@ -486,4 +488,42 @@ export class GuiDisplay {
             }
         });
     }
-}
+
+    public showTileSelectionUI(tilebag: Array<Tile>): void {
+        const modal = document.createElement('div');
+        modal.classList.add('tile-selection-modal');
+
+        const uniqueTiles = [...new Set(tilebag)];
+        uniqueTiles.forEach(tile => {
+            const tileElem = create_factory_tile();
+            tileElem.setAttribute(ATTR.tile_colour, tile.toString());
+            tileElem.addEventListener('click', () => this.onTileSelected(tile));
+            modal.appendChild(tileElem);
+        });
+
+        document.body.appendChild(modal);
+    }
+
+    private onTileSelected(tile: Tile): void {
+        const modal = document.querySelector('.tile-selection-modal');
+        if (modal) {
+            modal.remove();
+        }
+
+        // Find first unfilled factory
+        const factoryId = this.factories.findIndex((factory, id) => {
+            const required = id === 0 ? 6 : 4;
+            return factory.children.length < required;
+        });
+        if (factoryId === -1) return;
+
+        // Add tile to factory and update display
+        if (this.gamestate.addTileToFactory(factoryId, tile)) {
+            this.update_factory(factoryId, this.gamestate);
+
+            // Check if all factories are filled
+            if (this.gamestate.areFactoriesFilled()) {
+                this.gamestate.completeFactoryFilling();
+            }
+        }
+    }
