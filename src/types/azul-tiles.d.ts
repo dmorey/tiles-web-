@@ -7,6 +7,8 @@ declare module "azul-tiles" {
     export interface PlayerInterface {
         getMove(gamestate: GameState): Move;
         type: PlayerType;
+        id: number;
+        name: string;
     }
 
     export enum PlayerType {
@@ -14,15 +16,33 @@ declare module "azul-tiles" {
         AI
     }
 
-    export interface AIOpts {
+    export class AIOpts {
+        constructor();
+
+        // Required properties
         searchMethod: SearchMethod;
         pruningType: PruningType;
         sortMethod: SortMethod;
+
+        // Optional properties
+        timeout?: number;
+        optimal?: boolean;
+        print?: boolean;
+
+        // Optional configuration object
+        config?: {
+            movePruning?: boolean;
+            quickEval?: boolean;
+            forecast?: number;
+            firstTileValue?: number;
+            negativeScore?: boolean;
+        };
     }
 
     export enum SearchMethod {
         Random,
-        Minimax
+        Minimax,
+        TIME
     }
 
     export enum PruningType {
@@ -32,12 +52,15 @@ declare module "azul-tiles" {
 
     export enum SortMethod {
         None,
-        Score
+        Score,
+        BUBBLE_EFFICIENT
     }
 
     export class AI implements PlayerInterface {
+        constructor(opts: AIOpts);
+        id: number;
+        name: string;
         type: PlayerType;
-        constructor(opts?: AIOpts);
         getMove(gamestate: GameState): Move;
     }
 
@@ -53,22 +76,38 @@ declare module "azul-tiles/dist/state.js" {
     import { PlayerBoard } from "azul-tiles/dist/playerboard.js";
 
     export class GameState {
-        constructor();
-        addTileToFactory(factoryId: number, tile: Tile): boolean;
-        completeFactoryFilling(): boolean;
+        constructor(gamestate?: GameState, move?: Move);
+
+        // Properties
         tilebag: Array<Tile>;
         factory: Array<Array<Tile>>;
-        firstTile: boolean;
+        firstTile: Tile;
         playerBoards: Array<PlayerBoard>;
-        activePlayer: number;
         availableMoves: Array<Move>;
+        playedMoves: Array<Move>;
+        nPlayers: number;
+        round: number;
+        turn: number;
+        activePlayer: number;
+        startingPlayer: number;
+        previousPlayer: number;
         winner: Array<number>;
         state: State;
-        seed: number;
-        playMove(move: Move): void;
+        seed: string;
+
+        // Methods
+        newGame(nPlayers: number): void;
+        newRound(): void;
         nextTurn(): void;
-        newGame(numPlayers: number): void;
+        addTileToFactory(factoryId: number, tile: Tile): boolean;
+        areFactoriesFilled(): boolean;
+        completeFactoryFilling(): boolean;
         endRound(): boolean;
+        getMoves(): Array<Move>;
+        playMove(move: Move): void;
+        createFactories(): void;
+        evalScore(): number;
+        clone(): GameState;
     }
 
     export enum State {

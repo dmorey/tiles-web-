@@ -89,17 +89,16 @@ function process_ai_player(data: FormData, id: number): PlayerInterface {
 
     const opts = new AIOpts();
     // opts.depth = 3;
-    opts.method = SearchMethod.TIME;
+    opts.searchMethod = SearchMethod.TIME;
     opts.timeout = 1000;
     opts.optimal = true;
-    opts.config.movePruning;
-    // opts.config.moveAllFill = true;
-    opts.config.forecast = 0.1;
-    // opts.config.moveNoFloor = true;
-    opts.config.firstTileValue = 1.5;
-    // opts.config.centre = 0.01;
-    opts.config.quickEval = true;
-    opts.config.negativeScore = true;
+    opts.config = {
+        movePruning: true,
+        quickEval: true,
+        forecast: 0.1,
+        firstTileValue: 1.5,
+        negativeScore: true
+    };
     opts.print = true;
     // opts.optimal = true;
     // opts.randomBest = true;
@@ -118,7 +117,8 @@ function process_ai_player(data: FormData, id: number): PlayerInterface {
     }
     name += "L" + level.toString();
     // const ai = new MultiAI(id, opts);
-    const ai = new AI(id, opts);
+    const ai = new AI(opts);
+    ai.id = id;
     ai.name = name;
     return ai;
 }

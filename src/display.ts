@@ -2,7 +2,7 @@
 import { GameState, State } from "azul-tiles/dist/state.js";
 import { Move, Tile } from "azul-tiles/dist/azul.js";
 import { PlayerBoard } from "azul-tiles/dist/playerboard.js";
-import { PlayerInterface } from "./game.js";
+import { PlayerInterface } from "azul-tiles";
 
 const ATTR = {
     tile_colour: "tile-colour",
