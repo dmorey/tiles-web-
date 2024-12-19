@@ -216,6 +216,10 @@ export class GuiGame {
     screen_click_callback(event: Event): void {
         // Perform different action depending on game state
         switch (this.gamestate.state) {
+            case State.factoryFilling:
+                // Show tile selection UI for manual factory filling
+                this.display.showTileSelectionUI(this.gamestate.tilebag);
+                break;
             case State.turn:
                 const activePlayer = this.get_active_player();
                 switch (activePlayer.type) {
