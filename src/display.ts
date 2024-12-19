@@ -1,6 +1,8 @@
 // All the required function for manipulating the game display
-import { GameState, Move, PlayerBoard, PlayerInterface, Tile } from "azul-tiles";
-import { State } from "azul-tiles/dist/state.js";
+import { GameState, State } from "azul-tiles/dist/state.js";
+import { Move, Tile } from "azul-tiles/dist/azul.js";
+import { PlayerBoard } from "azul-tiles/dist/playerboard.js";
+import { PlayerInterface } from "./game.js";
 
 const ATTR = {
     tile_colour: "tile-colour",
@@ -208,14 +210,15 @@ function add_board(board_id: number, name: string): HTMLElement {
 
 export class GuiDisplay {
     private boards: Array<HTMLElement> = [];
-    private factories: Array<HTMLElement> = [];
-    private lines: Array<Array<HTMLElement>> = [];
     private gamestate: GameState;
+    public lines: Array<HTMLElement>[] = [];
+    public factories: Array<HTMLElement> = [];
+    private selectedFactory: number | undefined;
 
     constructor(gamestate: GameState, public players: Array<PlayerInterface>) {
         this.gamestate = gamestate;
         // Create player boards
-        gamestate.playerBoards.forEach((_: any, i: number) => {
+        gamestate.playerBoards.forEach((board: PlayerBoard, i: number) => {
             this.boards.push(add_board(i, players[i].name));
             //  Store references to all the lines
             const lines = [...this.boards[i].getElementsByClassName("line")] as Array<HTMLElement>;
@@ -236,7 +239,9 @@ export class GuiDisplay {
         document.getElementById("game-end")!.style.display = "none";
     }
 
-    create(gamestate: GameState, player: Array<PlayerInterface>) {}
+    create(gamestate: GameState, players: Array<PlayerInterface>): void {
+        // Implementation placeholder
+    }
 
     clear() {
         // Clear factories, player boards and tidy centre
@@ -250,7 +255,7 @@ export class GuiDisplay {
         factories_elem.innerHTML = "";
         this.factories = [];
         // Create factories
-        gamestate.factory.forEach((factory, ind) => {
+        gamestate.factory.forEach((factory: Array<Tile>, ind: number) => {
             // Create and add factory element
             const factory_elem = create_factory(ind);
             factories_elem.append(factory_elem);
@@ -349,7 +354,7 @@ export class GuiDisplay {
     }
 
     update_for_end_of_round(gamestate: GameState): void {
-        gamestate.playerBoards.forEach((_, player_id) => {
+        gamestate.playerBoards.forEach((_: PlayerBoard, player_id: number) => {
             this.update_board(player_id, gamestate);
         });
         // If not end of game, setup for next round
@@ -423,7 +428,7 @@ export class GuiDisplay {
                 }
             } else {
                 // Count how many tiles in factory
-                const ntiles = gamestate.factory[0].filter((x) => x == ind).length;
+                const ntiles = gamestate.factory[0].filter((x: Tile) => x == ind).length;
                 if (ntiles) {
                     tile.setAttribute(ATTR.tile_colour, ind.toString());
                     if (ntiles > 1) {
@@ -493,8 +498,8 @@ export class GuiDisplay {
         const modal = document.createElement('div');
         modal.classList.add('tile-selection-modal');
 
-        const uniqueTiles = [...new Set(tilebag)];
-        uniqueTiles.forEach(tile => {
+        const uniqueTiles = Array.from(new Set(tilebag));
+        uniqueTiles.forEach((tile: Tile) => {
             const tileElem = create_factory_tile();
             tileElem.setAttribute(ATTR.tile_colour, tile.toString());
             tileElem.addEventListener('click', () => this.onTileSelected(tile));
@@ -505,25 +510,29 @@ export class GuiDisplay {
     }
 
     private onTileSelected(tile: Tile): void {
-        const modal = document.querySelector('.tile-selection-modal');
-        if (modal) {
-            modal.remove();
+        if (!tile || tile === Tile.Null) {
+            console.error('Invalid tile selected');
+            return;
         }
 
-        // Find first unfilled factory
-        const factoryId = this.factories.findIndex((factory, id) => {
-            const required = id === 0 ? 6 : 4;
-            return factory.children.length < required;
-        });
-        if (factoryId === -1) return;
+        const factoryId = this.selectedFactory;
+        if (factoryId === undefined || factoryId < 0) {
+            console.error('No factory selected for tile placement');
+            return;
+        }
 
-        // Add tile to factory and update display
         if (this.gamestate.addTileToFactory(factoryId, tile)) {
             this.update_factory(factoryId, this.gamestate);
 
-            // Check if all factories are filled
-            if (this.gamestate.areFactoriesFilled()) {
-                this.gamestate.completeFactoryFilling();
+            if (this.gamestate.completeFactoryFilling()) {
+                const modal = document.querySelector('.tile-selection-modal');
+                if (modal) {
+                    modal.remove();
+                }
+                this.gamestate.getMoves();
             }
+        } else {
+            console.error('Failed to add tile to factory');
         }
     }
+}
