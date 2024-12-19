@@ -1,6 +1,7 @@
 // Handles the running of the game in gui mode
-import { GameState, Move, PlayerInterface, PlayerType, Tile } from "azul-tiles";
-import { State } from "azul-tiles/dist/state.js";
+import { GameState, State } from "azul-tiles/dist/state.js";
+import { Move, Tile } from "azul-tiles/dist/azul.js";
+import { PlayerInterface, PlayerType } from "azul-tiles";
 import { GuiDisplay } from "./display";
 
 export class Human implements PlayerInterface {
@@ -14,7 +15,9 @@ export class Human implements PlayerInterface {
 
 // Class that manages the interaction between the game logic, display and players
 export class GuiGame {
-    gamestate: GameState;
+    public lines: Array<HTMLElement>[] = [];
+    public factories: Array<HTMLElement> = [];
+    private gamestate: GameState;
     display: GuiDisplay;
 
     selected_tile: Tile = Tile.Null;
@@ -156,14 +159,13 @@ export class GuiGame {
         this.display.highlight_factory_tiles(event.target as HTMLElement);
 
         // Highlight possible lines
-        const moves = this.gamestate.availableMoves.filter((move) => {
+        const moves = this.gamestate.availableMoves.filter((move: Move) => {
             if (move.factory == factory_id && move.tile == tile) {
                 return true;
-            } else {
-                return false;
             }
+            return false;
         });
-        const lines = moves.reduce<Array<number>>((lines, move) => {
+        const lines = moves.reduce<Array<number>>((lines: number[], move: Move) => {
             lines.push(move.line);
             return lines;
         }, []);
@@ -216,7 +218,7 @@ export class GuiGame {
     screen_click_callback(event: Event): void {
         // Perform different action depending on game state
         switch (this.gamestate.state) {
-            case State.factoryFilling:
+            case State.turn:
                 // Show tile selection UI for manual factory filling
                 this.display.showTileSelectionUI(this.gamestate.tilebag);
                 break;
@@ -237,7 +239,7 @@ export class GuiGame {
                         break;
                 }
                 break;
-            case State.endOfTurns:
+            case State.roundEnd:
                 // Either new round with player turn or end of game after this
                 if (!this.gamestate.endRound()) {
                     //  Game has finished
@@ -308,12 +310,11 @@ export class GuiGame {
     }
 
     check_move(player: number, tile: Tile, factory: number, line: number) {
-        const moves = this.gamestate.availableMoves.filter((move) => {
+        const moves = this.gamestate.availableMoves.filter((move: Move) => {
             if (move.factory == factory && move.tile == tile && move.line == line && move.player == player) {
                 return true;
-            } else {
-                return false;
             }
+            return false;
         });
         if (moves.length == 1) {
             return moves[0];
