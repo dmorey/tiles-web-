@@ -1,4 +1,5 @@
-import { AIOpts, PlayerInterface, MultiAI, AI, PruningType, SearchMethod, SortMethod } from "azul-tiles";
+import { AI, GameState, Move, MultiAI, PlayerBoard, PlayerType } from "azul-tiles";
+import { SearchMethod, PruningType, SortMethod, AIOpts, PlayerInterface } from "./types/ai";
 import { Human } from "./game";
 
 export function add_player(type: string): void {
@@ -56,7 +57,9 @@ export function get_players(): Array<PlayerInterface> {
                 if (name == "") {
                     name = player.getElementsByClassName("player-title")[0].innerHTML;
                 }
-                players.push(new Human(id, name));
+                const human = new Human(id, name);
+                human.type = PlayerType.HUMAN;
+                players.push(human);
                 break;
 
             case "ai":
@@ -77,8 +80,11 @@ export function validate_players(players: Array<PlayerInterface>): {
     return { valid: true, message: "" };
 }
 
-export function validate_options(): boolean {
-    return true;
+export function validate_options(): {
+    valid: boolean;
+    message: string;
+} {
+    return { valid: true, message: "" };
 }
 
 const AI_LEVEL = [10, 100, 1000];
@@ -87,37 +93,35 @@ function process_ai_player(data: FormData, id: number): PlayerInterface {
     const level = parseInt(data.get("level") as string);
     const type = data.get("personality") as string;
 
-    const opts = new AIOpts();
-    // opts.depth = 3;
-    opts.searchMethod = SearchMethod.TIME;
-    opts.timeout = 1000;
-    opts.optimal = true;
-    opts.config = {
-        movePruning: true,
-        quickEval: true,
-        forecast: 0.1,
-        firstTileValue: 1.5,
-        negativeScore: true
+    const opts: AIOpts = {
+        searchMethod: SearchMethod.TIME,
+        pruningType: PruningType.AlphaBeta,
+        sortMethod: SortMethod.BUBBLE_EFFICIENT,
+        timeout: AI_LEVEL[level],
+        optimal: true,
+        config: {
+            movePruning: true,
+            quickEval: true,
+            forecast: 0.1,
+            firstTileValue: 1.5,
+            negativeScore: false
+        }
     };
-    opts.print = true;
-    // opts.optimal = true;
-    // opts.randomBest = true;
 
     let name = "A.I ";
-    switch (type) {
-        case "tactical":
-            // opts.config.centre = 0.01;
-            opts.config.firstTileValue = 1.5;
-            opts.config.movePruning = true;
-            opts.config.quickEval = true;
-            // opts.config.forecast = 0.01;
-            opts.sortMethod = SortMethod.BUBBLE_EFFICIENT;
-            name += "T ";
-            break;
+    if (type === "random") {
+        opts.searchMethod = SearchMethod.Random;
+        name += "(Random)";
+    } else if (type === "minimax") {
+        opts.searchMethod = SearchMethod.Minimax;
+        name += "(Minimax)";
+    } else {
+        name += "(Time)";
     }
-    name += "L" + level.toString();
-    // const ai = new MultiAI(id, opts);
+
+    // Create AI instance with proper configuration
     const ai = new AI(opts);
+    ai.type = PlayerType.AI;
     ai.id = id;
     ai.name = name;
     return ai;

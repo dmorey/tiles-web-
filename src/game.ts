@@ -1,14 +1,15 @@
 // Handles the running of the game in gui mode
 import { GameState, State } from "azul-tiles/dist/state.js";
 import { Move, Tile } from "azul-tiles/dist/azul.js";
-import { PlayerInterface, PlayerType } from "azul-tiles";
+import { PlayerInterface, PlayerType } from "./types/ai";
 import { GuiDisplay } from "./display";
 
 export class Human implements PlayerInterface {
     type = PlayerType.HUMAN;
     constructor(public id: number, public name: string) {}
-    getMove(gs: GameState): Move | undefined {
-        return undefined;
+    getMove(gs: GameState): Move {
+        // Human moves are handled through UI interactions
+        return undefined as unknown as Move;
     }
     newRound(gs: GameState): void {}
 }

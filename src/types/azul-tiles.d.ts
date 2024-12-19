@@ -1,8 +1,7 @@
 declare module "azul-tiles" {
-    export { GameState } from "azul-tiles/dist/state.js";
+    export { GameState, State } from "azul-tiles/dist/state.js";
     export { Move, Tile } from "azul-tiles/dist/azul.js";
     export { PlayerBoard } from "azul-tiles/dist/playerboard.js";
-    export { State } from "azul-tiles/dist/state.js";
 
     export interface PlayerInterface {
         getMove(gamestate: GameState): Move;
@@ -16,20 +15,29 @@ declare module "azul-tiles" {
         AI
     }
 
-    export class AIOpts {
-        constructor();
+    export enum SearchMethod {
+        Random = 0,
+        Minimax = 1,
+        TIME = 2
+    }
 
-        // Required properties
+    export enum PruningType {
+        None = 0,
+        AlphaBeta = 1
+    }
+
+    export enum SortMethod {
+        None = 0,
+        Score = 1,
+        BUBBLE_EFFICIENT = 2
+    }
+
+    export class AIOpts {
         searchMethod: SearchMethod;
         pruningType: PruningType;
         sortMethod: SortMethod;
-
-        // Optional properties
         timeout?: number;
         optimal?: boolean;
-        print?: boolean;
-
-        // Optional configuration object
         config?: {
             movePruning?: boolean;
             quickEval?: boolean;
@@ -37,23 +45,6 @@ declare module "azul-tiles" {
             firstTileValue?: number;
             negativeScore?: boolean;
         };
-    }
-
-    export enum SearchMethod {
-        Random,
-        Minimax,
-        TIME
-    }
-
-    export enum PruningType {
-        None,
-        AlphaBeta
-    }
-
-    export enum SortMethod {
-        None,
-        Score,
-        BUBBLE_EFFICIENT
     }
 
     export class AI implements PlayerInterface {
